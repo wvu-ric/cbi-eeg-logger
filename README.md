@@ -8,8 +8,7 @@
 3. Quit powershell with `exit` and re open the terminal window
 4. Download this repo:
 https://github.com/openyou/emokit
-5. Download and install the Microsoft Visual C++ 9.0 Library from
-http://aka.ms/vcpython27
+5. Download and install the Microsoft Visual C++ 9.0 Library from http://aka.ms/vcpython27
 6. Install the following python dependencies with easy_install:
 
 * `easy_install pywinusb`

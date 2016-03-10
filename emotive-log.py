@@ -29,8 +29,10 @@ DEVICE_POLL_INTERVAL = 0.001  # in seconds
 
 log_index = 0
 f = open('eeg-log.csv', 'wt')
-writer = csv.writer(f)
-writer.writerow(('PacketNo', 'F3', 'FC5', 'AF3', 'F7', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'F8', 'AF4', 'FC6', 'F4', 'F3Q', 'FC5Q', 'AF3', 'F7Q', 'T7Q', 'P7Q', 'O1Q', 'O2Q', 'P8Q', 'T8Q', 'F8Q', 'AF4Q', 'FC6Q', 'F4Q'))
+field_names = ['PacketNo', 'F3', 'FC5', 'AF3', 'F7', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'F8', 'AF4', 'FC6', 'F4', 'F3Q', 'FC5Q', 'AF3', 'F7Q', 'T7Q', 'P7Q', 'O1Q', 'O2Q', 'P8Q', 'T8Q', 'F8Q', 'AF4Q', 'FC6Q', 'F4Q']
+writer = csv.DictWriter(f, fieldnames=field_names)
+writer.writeheader()
+# writer.writerow()
 
 sensor_bits = {
     'F3': [10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7],
@@ -623,6 +625,16 @@ class Emotiv(object):
         """
         Greenlet that outputs sensor, gyro and battery values once per second to the console.
         """
+
+        dataDict = {}        
+        for k in enumerate(self.sensors):
+            dataDict[k[1]] = self.sensors[k[1]]['value']
+            q = k[1].join("Q")
+            dataDict[q] = self.sensors[k[1]]['quality']
+            dataDict['PacketNo'] = log_index
+        writer.writerow(dataDict)
+        log_index++
+
         if self.display_output:
             while self.running:
                 if system_platform == "Windows":
@@ -642,3 +654,4 @@ if __name__ == "__main__":
         a.setup()
     except KeyboardInterrupt:
         a.close()
+        f.close()
