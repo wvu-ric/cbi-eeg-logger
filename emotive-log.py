@@ -27,11 +27,6 @@ from subprocess import check_output
 # "resume" delay.
 DEVICE_POLL_INTERVAL = 0.001  # in seconds
 
-log_index = 0
-f = open('eeg-log.csv', 'wt')
-field_names = ['PacketNo', 'F3', 'FC5', 'AF3', 'F7', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'F8', 'AF4', 'FC6', 'F4', 'F3Q', 'FC5Q', 'AF3', 'F7Q', 'T7Q', 'P7Q', 'O1Q', 'O2Q', 'P8Q', 'T8Q', 'F8Q', 'AF4Q', 'FC6Q', 'F4Q']
-writer = csv.DictWriter(f, fieldnames=field_names)
-writer.writeheader()
 # writer.writerow()
 
 sensor_bits = {
@@ -371,6 +366,11 @@ class Emotiv(object):
         """
         Sets up initial values.
         """
+        self.log_index = 0
+        self.f = open('eeg-log.csv', 'wt')
+        self.field_names = ['PacketNo', 'F3', 'FC5', 'AF3', 'F7', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'F8', 'AF4', 'FC6', 'F4', 'F3Q', 'FC5Q', 'AF3Q', 'F7Q', 'T7Q', 'P7Q', 'O1Q', 'O2Q', 'P8Q', 'T8Q', 'F8Q', 'AF4Q', 'FC6Q', 'F4Q']
+        self.writer = csv.DictWriter(self.f, fieldnames=self.field_names)
+        self.writer.writeheader()
         self.running = True
         self.packets = Queue()
         self.packets_received = 0
@@ -625,22 +625,21 @@ class Emotiv(object):
         """
         Greenlet that outputs sensor, gyro and battery values once per second to the console.
         """
-
-        dataDict = {}        
-        for k in enumerate(self.sensors):
-            dataDict[k[1]] = self.sensors[k[1]]['value']
-            q = k[1].join("Q")
-            dataDict[q] = self.sensors[k[1]]['quality']
-            dataDict['PacketNo'] = log_index
-        writer.writerow(dataDict)
-        log_index++
-
         if self.display_output:
             while self.running:
                 if system_platform == "Windows":
                     os.system('cls')
                 else:
                     os.system('clear')
+                dataDict = {}        
+                for k in enumerate(self.sensors):
+                    if k[1] != 'Unknown' and k[1] != 'Y' and k[1] != 'X':
+                        dataDict[k[1]] = self.sensors[k[1]]['value']
+                        q = k[1]+'Q'
+                        dataDict[q] = self.sensors[k[1]]['quality']
+                        dataDict['PacketNo'] = self.log_index
+                self.writer.writerow(dataDict)
+                self.log_index+= 1
                 print "Packets Received: %s Packets Processed: %s" % (self.packets_received, self.packets_processed)
                 print('\n'.join("%s Reading: %s Quality: %s" %
                                 (k[1], self.sensors[k[1]]['value'],
@@ -654,4 +653,4 @@ if __name__ == "__main__":
         a.setup()
     except KeyboardInterrupt:
         a.close()
-        f.close()
+        self.f.close()
